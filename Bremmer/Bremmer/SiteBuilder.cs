@@ -65,13 +65,20 @@ namespace Bremmer
                         {
                             string name = view.Name.RemoveExtension(RazorExtension);
                             string data = reader.ReadToEnd();
-                            var result = Engine.Razor.RunCompile(data, name, null, new { });
 
-                            using (StreamWriter writer = new StreamWriter(outputFolder + "/" + name + ".html"))
+                            try
                             {
-                                writer.WriteLine(result);
+                                var result = Engine.Razor.RunCompile(data, name, null, new { });
+                                using (StreamWriter writer = new StreamWriter(outputFolder + "/" + name + ".html"))
+                                {
+                                    writer.WriteLine(result);
+                                }
                             }
-
+                            catch(Exception e)
+                            {
+                                System.Console.WriteLine("Could not generate from " + view.FullName);
+                                System.Console.WriteLine(e.Message);
+                            }
                         }
                     }
                 }
