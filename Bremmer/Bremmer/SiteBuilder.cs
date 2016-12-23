@@ -13,6 +13,7 @@ namespace Bremmer
     {
         private readonly string TemplatesDirectory = "templates";
         private readonly string ViewsDirectory = "views";
+        private readonly string ResourcesDirectory = "resources";
         private readonly string RazorExtension = ".cshtml";
 
         public DirectoryInfo Source { get; set; }
@@ -21,13 +22,13 @@ namespace Bremmer
         public SiteBuilder(string source)
         {
             this.Source = new DirectoryInfo(source);
-            this.Target = new DirectoryInfo(Environment.CurrentDirectory);
+            this.Target = new DirectoryInfo(Environment.CurrentDirectory + "/" + "output");
         }
+
 
         public void Build()
         {
-
-            string outputFolder = this.Target.FullName + "/" + "output";
+            string outputFolder = this.Target.FullName;
             if (!Directory.Exists(outputFolder))
             {
                 Directory.CreateDirectory(outputFolder);
@@ -35,8 +36,16 @@ namespace Bremmer
 
             DirectoryInfo[] subdirectories = this.Source.GetDirectories();
 
+            this.DefineTemplates(subdirectories);
+            this.ProcessViews(subdirectories);
+            this.CopyResources(subdirectories);
+        }
+
+
+        private void DefineTemplates(DirectoryInfo[] directories)
+        {
             // Find templates
-            var templates = subdirectories.FirstOrDefault(x => x.Name.ToLower().Equals(TemplatesDirectory));
+            var templates = directories.FirstOrDefault(x => x.Name.ToLower().Equals(TemplatesDirectory));
             if (templates != null)
             {
                 foreach (FileInfo template in templates.GetFiles())
@@ -52,9 +61,11 @@ namespace Bremmer
                     }
                 }
             }
+        }
 
-            // Process pages
-            var views = subdirectories.FirstOrDefault(x => x.Name.ToLower().Equals(ViewsDirectory));
+        private void ProcessViews(DirectoryInfo[] directories)
+        {
+            var views = directories.FirstOrDefault(x => x.Name.ToLower().Equals(ViewsDirectory));
             if (views != null)
             {
                 foreach (FileInfo view in views.GetFiles())
@@ -66,26 +77,38 @@ namespace Bremmer
                             string name = view.Name.RemoveExtension(RazorExtension);
                             string data = reader.ReadToEnd();
 
-                            try
+                            var result = Engine.Razor.RunCompile(data, name, null, new { });
+
+                            using (StreamWriter writer = new StreamWriter(this.Target.FullName + "/" + name + ".html"))
                             {
-                                var result = Engine.Razor.RunCompile(data, name, null, new { });
-                                using (StreamWriter writer = new StreamWriter(outputFolder + "/" + name + ".html"))
-                                {
-                                    writer.WriteLine(result);
-                                }
+                                writer.WriteLine(result);
                             }
-                            catch(Exception e)
-                            {
-                                System.Console.WriteLine("Could not generate from " + view.FullName);
-                                System.Console.WriteLine(e.Message);
-                            }
+
                         }
                     }
                 }
             }
-
-            // Copy resources
-
         }
+
+        private void CopyResources(DirectoryInfo[] directories)
+        {
+            // Copy resources
+            var resources = directories.FirstOrDefault(x => x.Name.ToLower().Equals(ResourcesDirectory));
+            if (resources != null)
+            {
+                foreach (string path in Directory.GetDirectories(resources.FullName, "*", SearchOption.AllDirectories))
+                {
+                    string newPath = path.Replace(this.Source.FullName, this.Target.FullName);
+                    Directory.CreateDirectory(newPath);
+                }
+
+                foreach (string path in Directory.GetFiles(resources.FullName, "*", SearchOption.AllDirectories))
+                {
+                    string newPath = path.Replace(this.Source.FullName, this.Target.FullName);
+                    File.Copy(path, newPath, true);
+                }
+            }
+        }
+
     }
 }

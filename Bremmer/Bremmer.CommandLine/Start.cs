@@ -14,8 +14,21 @@ namespace Bremmer.CommandLine
             if(args.Length > 0)
             {
                 string source = args[0];
-                SiteBuilder builder = new SiteBuilder(source);
-                builder.Build();
+
+                try
+                {
+                    SiteBuilder builder = new SiteBuilder(source);
+
+                    System.Console.WriteLine("Site build started...");
+                    builder.Build();
+                    System.Console.WriteLine("Site build completed: " + builder.Target.FullName);
+
+                }
+                catch (Exception e)
+                {
+                    System.Console.WriteLine(e.Message);
+                }
+                
             }
         }
     }
