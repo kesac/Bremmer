@@ -19,5 +19,10 @@ namespace Bremmer
                 return s;
             }
         }
+
+        public static string RemoveSubstring(this string s, string substring)
+        {
+            return s.Replace(substring, string.Empty);
+        }
     }
 }

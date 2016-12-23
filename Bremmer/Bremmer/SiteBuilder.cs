@@ -9,6 +9,18 @@ using RazorEngine.Templating;
 
 namespace Bremmer
 {
+    public delegate void ProcessEventHandler(object sender, EventArgs e);
+
+    public class ProcessEventArgs : EventArgs
+    {
+        public string Description { get; set; }
+
+        public ProcessEventArgs(string description)
+        {
+            this.Description = description;
+        }
+    }
+
     public class SiteBuilder
     {
         private readonly string TemplatesDirectory = "templates";
@@ -19,28 +31,53 @@ namespace Bremmer
         public DirectoryInfo Source { get; set; }
         public DirectoryInfo Target { get; set; }
 
+        public event ProcessEventHandler Processed;
+
         public SiteBuilder(string source)
         {
             this.Source = new DirectoryInfo(source);
-            this.Target = new DirectoryInfo(Environment.CurrentDirectory + "/" + "output");
+            this.Target = new DirectoryInfo(Environment.CurrentDirectory + Path.DirectorySeparatorChar + "output");
         }
 
+        private void Log(string description)
+        {
+            if(this.Processed != null)
+            {
+                this.Processed.Invoke(this, new ProcessEventArgs(description));
+            }
+        }
 
         public void Build()
         {
             string outputFolder = this.Target.FullName;
             if (!Directory.Exists(outputFolder))
             {
+                this.Log("Created " + outputFolder);
                 Directory.CreateDirectory(outputFolder);
             }
 
             DirectoryInfo[] subdirectories = this.Source.GetDirectories();
 
+            this.ClearTarget();
             this.DefineTemplates(subdirectories);
             this.ProcessViews(subdirectories);
             this.CopyResources(subdirectories);
         }
 
+        private void ClearTarget()
+        {
+            foreach (string path in Directory.GetFiles(this.Target.FullName, "*", SearchOption.AllDirectories))
+            {
+                this.Log("Deleting file " + path);
+                File.Delete(path);
+            }
+
+            foreach (string path in Directory.GetDirectories(this.Target.FullName, "*", SearchOption.AllDirectories))
+            {
+                this.Log("Deleting folder " + path);
+                Directory.Delete(path);
+            }
+        }
 
         private void DefineTemplates(DirectoryInfo[] directories)
         {
@@ -50,6 +87,7 @@ namespace Bremmer
             {
                 foreach (FileInfo template in templates.GetFiles())
                 {
+                    this.Log("Processing template " + template.FullName);
                     if (template.Name.ToLower().EndsWith(RazorExtension)) // Ignore non-razor files
                     {
                         using (StreamReader reader = new StreamReader(template.FullName))
@@ -57,6 +95,7 @@ namespace Bremmer
                             string name = template.Name.RemoveExtension(RazorExtension);
                             string data = reader.ReadToEnd();
                             Engine.Razor.AddTemplate(name, data);
+                            this.Log("Added template " + name);
                         }
                     }
                 }
@@ -68,20 +107,38 @@ namespace Bremmer
             var views = directories.FirstOrDefault(x => x.Name.ToLower().Equals(ViewsDirectory));
             if (views != null)
             {
-                foreach (FileInfo view in views.GetFiles())
+                foreach (FileInfo view in views.GetFiles("*", SearchOption.AllDirectories)) // Recurse
                 {
                     if (view.Name.ToLower().EndsWith(RazorExtension)) // Ignore non-razor files
                     {
+                        this.Log("Processing view " + view.FullName);
                         using (StreamReader reader = new StreamReader(view.FullName))
                         {
-                            string name = view.Name.RemoveExtension(RazorExtension);
+                            string name = view.FullName.RemoveSubstring(views.FullName).RemoveExtension(RazorExtension);
                             string data = reader.ReadToEnd();
+                            string destination = this.Target.FullName + Path.DirectorySeparatorChar + name;
+
+                            if (name.EndsWith("index"))
+                            {
+                                string destinationFolder = this.Target.FullName + Path.DirectorySeparatorChar + name.RemoveExtension("index");
+                                if (!Directory.Exists(destinationFolder))
+                                {
+                                    Directory.CreateDirectory(destinationFolder);
+                                }
+
+                                destination += ".html";
+                            }
+                            else
+                            {
+                                Directory.CreateDirectory(destination); // order matters here
+                                destination += Path.DirectorySeparatorChar + "index.html";
+                            }
 
                             var result = Engine.Razor.RunCompile(data, name, null, new { });
-
-                            using (StreamWriter writer = new StreamWriter(this.Target.FullName + "/" + name + ".html"))
+                            using (StreamWriter writer = new StreamWriter(destination))
                             {
                                 writer.WriteLine(result);
+                                this.Log("Compiled view " + view.FullName);
                             }
 
                         }
@@ -100,12 +157,14 @@ namespace Bremmer
                 {
                     string newPath = path.Replace(this.Source.FullName, this.Target.FullName);
                     Directory.CreateDirectory(newPath);
+                    this.Log("Created new folder " + newPath);
                 }
 
                 foreach (string path in Directory.GetFiles(resources.FullName, "*", SearchOption.AllDirectories))
                 {
                     string newPath = path.Replace(this.Source.FullName, this.Target.FullName);
                     File.Copy(path, newPath, true);
+                    this.Log("Copied file to" + newPath);
                 }
             }
         }
