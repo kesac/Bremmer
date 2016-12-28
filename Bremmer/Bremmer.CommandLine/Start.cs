@@ -21,7 +21,6 @@ namespace Bremmer.CommandLine
 
                     System.Console.WriteLine("Site build started...");
                     builder.Build();
-                    System.Console.WriteLine("Site build completed: " + builder.Target.FullName);
                     System.Console.ReadKey();
 
                 }
