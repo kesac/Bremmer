@@ -29,14 +29,14 @@ namespace Bremmer
         private readonly string RazorExtension = ".cshtml";
 
         public DirectoryInfo Source { get; set; }
-        public DirectoryInfo Target { get; set; }
+        public DirectoryInfo Destination { get; set; }
 
         public event ProcessEventHandler Processed;
 
         public SiteBuilder(string source)
         {
             this.Source = new DirectoryInfo(source);
-            this.Target = new DirectoryInfo(Environment.CurrentDirectory + Path.DirectorySeparatorChar + "output");
+            this.Destination = new DirectoryInfo(Environment.CurrentDirectory + Path.DirectorySeparatorChar + "output");
         }
 
         private void Log(string description)
@@ -49,7 +49,7 @@ namespace Bremmer
 
         public void Build()
         {
-            string outputFolder = this.Target.FullName;
+            string outputFolder = this.Destination.FullName;
             if (!Directory.Exists(outputFolder))
             {
                 this.Log("Created " + outputFolder);
@@ -62,21 +62,14 @@ namespace Bremmer
             this.DefineTemplates(subdirectories);
             this.ProcessViews(subdirectories);
             this.CopyResources(subdirectories);
+
+            this.Log("Site build complete. See " + this.Destination.FullName);
         }
 
         private void ClearTarget()
         {
-            foreach (string path in Directory.GetFiles(this.Target.FullName, "*", SearchOption.AllDirectories))
-            {
-                this.Log("Deleting file " + path);
-                File.Delete(path);
-            }
-
-            foreach (string path in Directory.GetDirectories(this.Target.FullName, "*", SearchOption.AllDirectories))
-            {
-                this.Log("Deleting folder " + path);
-                Directory.Delete(path);
-            }
+            this.Log("Deleting output folder and all contents...");
+            Directory.Delete(this.Destination.FullName, true);
         }
 
         private void DefineTemplates(DirectoryInfo[] directories)
@@ -116,11 +109,11 @@ namespace Bremmer
                         {
                             string name = view.FullName.RemoveSubstring(views.FullName).RemoveExtension(RazorExtension);
                             string data = reader.ReadToEnd();
-                            string destination = this.Target.FullName + Path.DirectorySeparatorChar + name;
+                            string destination = this.Destination.FullName + Path.DirectorySeparatorChar + name;
 
                             if (name.EndsWith("index"))
                             {
-                                string destinationFolder = this.Target.FullName + Path.DirectorySeparatorChar + name.RemoveExtension("index");
+                                string destinationFolder = this.Destination.FullName + Path.DirectorySeparatorChar + name.RemoveExtension("index");
                                 if (!Directory.Exists(destinationFolder))
                                 {
                                     Directory.CreateDirectory(destinationFolder);
@@ -155,14 +148,14 @@ namespace Bremmer
             {
                 foreach (string path in Directory.GetDirectories(resources.FullName, "*", SearchOption.AllDirectories))
                 {
-                    string newPath = path.Replace(this.Source.FullName, this.Target.FullName);
+                    string newPath = path.Replace(this.Source.FullName, this.Destination.FullName);
                     Directory.CreateDirectory(newPath);
                     this.Log("Created new folder " + newPath);
                 }
 
                 foreach (string path in Directory.GetFiles(resources.FullName, "*", SearchOption.AllDirectories))
                 {
-                    string newPath = path.Replace(this.Source.FullName, this.Target.FullName);
+                    string newPath = path.Replace(this.Source.FullName, this.Destination.FullName);
                     File.Copy(path, newPath, true);
                     this.Log("Copied file to" + newPath);
                 }
