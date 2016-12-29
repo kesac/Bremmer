@@ -39,13 +39,6 @@ namespace Bremmer
             this.Destination = new DirectoryInfo(Environment.CurrentDirectory + Path.DirectorySeparatorChar + "output");
         }
 
-        private void Log(string description)
-        {
-            if(this.Processed != null)
-            {
-                this.Processed.Invoke(this, new ProcessEventArgs(description));
-            }
-        }
 
         public void Build()
         {
@@ -80,7 +73,6 @@ namespace Bremmer
             {
                 foreach (FileInfo template in templates.GetFiles())
                 {
-                    this.Log("Processing template " + template.FullName);
                     if (template.Name.ToLower().EndsWith(RazorExtension)) // Ignore non-razor files
                     {
                         using (StreamReader reader = new StreamReader(template.FullName))
@@ -104,7 +96,6 @@ namespace Bremmer
                 {
                     if (view.Name.ToLower().EndsWith(RazorExtension)) // Ignore non-razor files
                     {
-                        this.Log("Processing view " + view.FullName);
                         using (StreamReader reader = new StreamReader(view.FullName))
                         {
                             string name = view.FullName.RemoveSubstring(views.FullName).RemoveExtension(RazorExtension);
@@ -146,21 +137,30 @@ namespace Bremmer
             var resources = directories.FirstOrDefault(x => x.Name.ToLower().Equals(ResourcesDirectory));
             if (resources != null)
             {
+                this.Log("Creating new folders...");
                 foreach (string path in Directory.GetDirectories(resources.FullName, "*", SearchOption.AllDirectories))
                 {
-                    string newPath = path.Replace(this.Source.FullName + ResourcesDirectory, this.Destination.FullName + Path.DirectorySeparatorChar);
+                    string newPath = path.Replace(Path.Combine(this.Source.FullName, ResourcesDirectory), this.Destination.FullName + Path.DirectorySeparatorChar);
                     Directory.CreateDirectory(newPath);
-                    this.Log("Created new folder " + newPath);
+                    this.Log("\t" + newPath);
                 }
 
+                this.Log("Copying files...");
                 foreach (string path in Directory.GetFiles(resources.FullName, "*", SearchOption.AllDirectories))
                 {
-                    string newPath = path.Replace(this.Source.FullName + ResourcesDirectory, this.Destination.FullName + Path.DirectorySeparatorChar);
+                    string newPath = path.Replace(Path.Combine(this.Source.FullName, ResourcesDirectory), this.Destination.FullName + Path.DirectorySeparatorChar);
                     File.Copy(path, newPath, true);
-                    this.Log("Copied file to" + newPath);
+                    this.Log("\t" + newPath);
                 }
             }
         }
 
+        private void Log(string description)
+        {
+            if (this.Processed != null)
+            {
+                this.Processed.Invoke(this, new ProcessEventArgs(description));
+            }
+        }
     }
 }
