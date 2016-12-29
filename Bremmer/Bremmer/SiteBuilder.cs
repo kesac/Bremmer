@@ -148,14 +148,14 @@ namespace Bremmer
             {
                 foreach (string path in Directory.GetDirectories(resources.FullName, "*", SearchOption.AllDirectories))
                 {
-                    string newPath = path.Replace(this.Source.FullName, this.Destination.FullName);
+                    string newPath = path.Replace(this.Source.FullName + ResourcesDirectory, this.Destination.FullName + Path.DirectorySeparatorChar);
                     Directory.CreateDirectory(newPath);
                     this.Log("Created new folder " + newPath);
                 }
 
                 foreach (string path in Directory.GetFiles(resources.FullName, "*", SearchOption.AllDirectories))
                 {
-                    string newPath = path.Replace(this.Source.FullName, this.Destination.FullName);
+                    string newPath = path.Replace(this.Source.FullName + ResourcesDirectory, this.Destination.FullName + Path.DirectorySeparatorChar);
                     File.Copy(path, newPath, true);
                     this.Log("Copied file to" + newPath);
                 }

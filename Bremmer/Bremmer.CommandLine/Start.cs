@@ -21,13 +21,11 @@ namespace Bremmer.CommandLine
 
                     System.Console.WriteLine("Site build started...");
                     builder.Build();
-                    System.Console.ReadKey();
 
                 }
                 catch (Exception e)
                 {
                     System.Console.WriteLine(e.Message);
-                    System.Console.ReadKey();
                 }
 
             }
