@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bremmer", "Bremmer\Bremmer.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bremmer.CommandLine", "Bremmer.CommandLine\Bremmer.CommandLine.csproj", "{5EA270F7-9532-4B53-ABC2-450C9F18A8E1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bremmer.Viewer", "Bremmer.Viewer\Bremmer.Viewer.csproj", "{6A50262C-2205-4BDC-8B1F-B6EA011D210E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{5EA270F7-9532-4B53-ABC2-450C9F18A8E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5EA270F7-9532-4B53-ABC2-450C9F18A8E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5EA270F7-9532-4B53-ABC2-450C9F18A8E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A50262C-2205-4BDC-8B1F-B6EA011D210E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A50262C-2205-4BDC-8B1F-B6EA011D210E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A50262C-2205-4BDC-8B1F-B6EA011D210E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A50262C-2205-4BDC-8B1F-B6EA011D210E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
